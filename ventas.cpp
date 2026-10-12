@@ -2,10 +2,9 @@
 #include <cstdio>
 #include <cstring>
 #include "buffet.h"
-
 using namespace std;
 
-// Misma cuenta que en normalizacion.cpp (corrimiento de K), si no el login no coincide
+
 void encriptarPassword(char passOriginal[], char passDestino[], int k) {
     int i = 0;
     while (passOriginal[i] != '\0') {
@@ -68,7 +67,7 @@ int loginMozo() {
         return 0;
     }
 
-    // Los ids son correlativos desde 1, asi que el mozo N esta en la posicion N-1
+    
     if (id < 1 || fseek(fMozos, (long)(id - 1) * sizeof(Mozo), SEEK_SET) != 0
         || fread(&m, sizeof(Mozo), 1, fMozos) != 1 || m.idMozo != id) {
         cout << "El mozo " << id << " no existe." << endl;
@@ -90,7 +89,7 @@ int loginMozo() {
     return id;
 }
 
-// El inventario esta ordenado por codigo (pero con huecos), asi que uso busqueda binaria
+
 // Devuelve la posicion del producto en el archivo o -1 si no esta
 int buscarProducto(FILE* fInventario, int codigo, Producto& prod) {
     fseek(fInventario, 0, SEEK_END);
@@ -173,7 +172,7 @@ void cargarVenta(char nombreArchivo[]) {
     cout << "Venta cargada. Comision: $" << venta.comision << endl;
 }
 
-// Ordena la planilla del dia por idMozo (burbujeo directo sobre el archivo)
+// Ordena la planilla del dia por idMozo 
 void ordenarPorMozo(char nombreArchivo[]) {
     FILE* f = fopen(nombreArchivo, "rb+");
     if (!f) {
