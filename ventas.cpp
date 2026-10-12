@@ -5,6 +5,7 @@
 using namespace std;
 
 
+
 void encriptarPassword(char passOriginal[], char passDestino[], int k) {
     int i = 0;
     while (passOriginal[i] != '\0') {
