@@ -1,15 +1,7 @@
+#include "buffet.h"
 #include <iostream>
 #include <cstdio> 
 #include <cstring> // Para strcmp
-
-// Estructura oficial para las planillas diarias y semanales
-struct Comanda {
-    int idMozo;
-    int codigoProducto;
-    int cantidad;
-    float comision;
-};
-
 // Función para ordenar el archivo semanal en disco por idMozo (Método Burbuja)
 void ordenarArchivoSemanal(const char* rutaSemanal) {
     FILE* arch = fopen(rutaSemanal, "rb+"); 
@@ -60,12 +52,12 @@ int main() {
     char nombreSemanal[50];
     
     // 1. Pedir el nombre del archivo semanal de salida
-    std::cout << "Ingrese el nombre para el archivo semanal (ej: comandas_semana_s1-06.dat): ";
+    std::cout << "Ingrese el nombre para el archivo semanal (ej: comandas_semana_s1-06.dat): "; //cambiar el nombre del archivo semanal a crear
     std::cin >> nombreSemanal;
 
     // 2. Abrir el archivo semanal en modo escritura
     FILE* archSemanal = fopen(nombreSemanal, "wb");
-    if (archSemanal == NULL) {
+    if (archSemanal == NULL) {// no hace falta porque fopen devuelve NULL si no puede abrir el archivo, pero es buena práctica verificarlo. Además raramente fopen puede fallar por permisos, espacio en disco, etc.
         std::cout << "Error al crear el archivo semanal." << std::endl;
         return 1;
     }
@@ -79,12 +71,12 @@ int main() {
         std::cin >> nombreDiario;
 
         // Si el usuario escribe "fin", salimos del bucle
-        if (strcmp(nombreDiario, "fin") == 0) {
+        if (strcmp(nombreDiario, "fin") == 0) { //raramente el archivo puede llamarse "fin", pero es una convención común para indicar que se terminó de ingresar archivos. si no le puedo poner un caracter especial
             break;
         }
 
         // Intentar abrir el archivo diario ingresado
-        FILE* archDiario = fopen(nombreDiario, "rb");
+        FILE* archDiario = fopen(nombreDiario, "rb"); //aca es rb porque es lectura binaria, no texto. si fuera texto sería "r" y rb+ se refiere a lectura y escritura binaria, pero no necesitamos eso. // por otro lado el nombre es ingresado por cin
         
         if (archDiario != NULL) {
             // Copiar los registros al archivo semanal
@@ -93,7 +85,7 @@ int main() {
             }
             fclose(archDiario);
             archivosProcesados++;
-            std::cout << "-> Archivo '" << nombreDiario << "' acoplado con exito." << std::endl;
+            std::cout << "-> Archivo " << nombreDiario << " se agregó al archivo semanal." << std::endl;
         } else {
             std::cout << "[ERROR] El archivo '" << nombreDiario << "' no existe. Intente de nuevo." << std::endl;
         }
@@ -103,7 +95,7 @@ int main() {
     fclose(archSemanal);
 
     // 4. Si se procesó al menos un archivo, ordenamos el resultado
-    if (archivosProcesados > 0) {
+    if (archivosProcesados > 0) { //el contador de archivos era para esto.
         std::cout << "\nOrdenando la planilla semanal por ID de Mozo..." << std::endl;
         ordenarArchivoSemanal(nombreSemanal);
         std::cout << "¡Proceso terminado! Se unificaron " << archivosProcesados << " archivos." << std::endl;
