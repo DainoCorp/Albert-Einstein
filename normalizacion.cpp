@@ -5,9 +5,9 @@
 using namespace std;
 
 void mostrarMozos() {
-    FILE* f = fopen("datos/mozos.dat", "rb"); // O "datos/mozos.dat" según donde lo guardaste
+    FILE* f = fopen("datos/mozos.dat", "rb");
     if (!f) {
-        cout << "No se pudo abrir mozos.dat" << endl; // BORRAR LUEGO:::::::
+        cout << "No se pudo abrir mozos.dat" << endl;
         return;
     }
 
@@ -19,15 +19,13 @@ void mostrarMozos() {
              << " | Clave cifrada: " << m.password 
              << " | Total Comision: $" << m.totalComision << endl;
     }
-
     fclose(f);
 }
-
 
 void encriptarPassword(const char* passOriginal, char* passDestino, int k) {
     int i = 0;
     while (passOriginal[i] != '\0') {
-        passDestino[i] = passOriginal[i] + k; // Cifrado César por desplazamiento
+        passDestino[i] = passOriginal[i] + k;
         i++;
     }
     passDestino[i] = '\0';
@@ -57,6 +55,7 @@ void actualizarStock() {
             if (prod.codigo == comanda.codigoProducto) {
                 prod.stockActual -= comanda.cantidad;
 
+                // Retrocedemos el puntero del archivo para pisar el registro actualizado
                 fseek(fInventario, -sizeof(Producto), SEEK_CUR);
                 fwrite(&prod, sizeof(Producto), 1, fInventario);
                 break;
@@ -66,7 +65,7 @@ void actualizarStock() {
 
     fclose(fHistoricas);
     fclose(fInventario);
-    cout << "[Tarea Stock] inventario.dat actualizado correctamente." << endl;
+    cout << "[Stock] inventario.dat actualizado correctamente." << endl;
 }
 
 int buscarMozoPorNombre(const Mozo mozos[], int cantMozos, const char* nombre) {
@@ -78,12 +77,25 @@ int buscarMozoPorNombre(const Mozo mozos[], int cantMozos, const char* nombre) {
     return -1;
 }
 
-int generarArchivoMozos (Mozo mozos[], int maxMozos){
+void ordenarComandasPorMozo(Comanda v[], int n) {
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = 0; j < n - i - 1; j++) {
+            if (v[j].idMozo > v[j + 1].idMozo) {
+                Comanda aux = v[j];
+                v[j] = v[j + 1];
+                v[j + 1] = aux;
+            }
+        }
+    }
+}
+
+int generarArchivoMozos(Mozo mozos[], int maxMozos) {
     FILE* fHistoricas = fopen("datos/comandas_historicas.dat", "rb");
     if (!fHistoricas) {
-        cout <<"ERROR : no se pudo abrir comandas_historicas.dat" << endl;
+        cout << "ERROR: No se pudo abrir comandas_historicas.dat" << endl;
         return 0;
     } 
+
     int cantMozos = 0;
     ComandaHistorica reg;
 
@@ -95,7 +107,7 @@ int generarArchivoMozos (Mozo mozos[], int maxMozos){
                 strcpy(mozos[cantMozos].nombre, reg.nombreMozo);
                 mozos[cantMozos].totalComision = reg.comision;
 
-                // Clave por defecto: su idMozo como texto, luego encriptado con +K
+                // Clave inicial: su idMozo como texto, luego encriptado
                 char clavePlana[20];
                 sprintf(clavePlana, "%d", mozos[cantMozos].idMozo);
                 encriptarPassword(clavePlana, mozos[cantMozos].password, K_ENCRIPTACION);
@@ -116,17 +128,67 @@ int generarArchivoMozos (Mozo mozos[], int maxMozos){
     fwrite(mozos, sizeof(Mozo), cantMozos, fMozos);
     fclose(fMozos);
 
-    cout << "[Tarea 1] mozos.dat generado con exito. Total: " << cantMozos << " mozos." << endl;
+    cout << "[Mozo] mozos.dat generado con exito. Total: " << cantMozos << " mozos." << endl;
     return cantMozos;
 }
 
+void generarPlanillasDiarias(const Mozo mozos[], int cantMozos) {
+    FILE* fHistoricas = fopen("datos/comandas_historicas.dat", "rb");
+    if (!fHistoricas) return;
+
+    ComandaHistorica todas[500];
+    int total = 0;
+    while (fread(&todas[total], sizeof(ComandaHistorica), 1, fHistoricas) == 1) {
+        total++;
+    }
+    fclose(fHistoricas);
+
+    bool procesadas[500] = {false};
+
+    for (int i = 0; i < total; i++) {
+        if (procesadas[i]) continue;
+
+        char fechaActual[11];
+        strcpy(fechaActual, todas[i].fecha);
+
+        Comanda ventasDia[100];
+        int cantVentasDia = 0;
+
+        for (int j = i; j < total; j++) {
+            if (strcmp(todas[j].fecha, fechaActual) == 0) {
+                procesadas[j] = true;
+                int idxMozo = buscarMozoPorNombre(mozos, cantMozos, todas[j].nombreMozo);
+                if (idxMozo != -1) {
+                    ventasDia[cantVentasDia].idMozo = mozos[idxMozo].idMozo;
+                    ventasDia[cantVentasDia].codigoProducto = todas[j].codigoProducto;
+                    ventasDia[cantVentasDia].cantidad = todas[j].cantidad;
+                    ventasDia[cantVentasDia].comision = todas[j].comision;
+                    cantVentasDia++;
+                }
+            }
+        }
+
+        ordenarComandasPorMozo(ventasDia, cantVentasDia);
+
+        char nombreArchivo[50];
+        sprintf(nombreArchivo, "datos/comandas_%s.dat", fechaActual);
+
+        FILE* fDia = fopen(nombreArchivo, "wb");
+        if (fDia) {
+            fwrite(ventasDia, sizeof(Comanda), cantVentasDia, fDia);
+            fclose(fDia);
+            cout << "[Planilla Diaria] Creada: " << nombreArchivo << endl;
+        }
+    }
+}
 
 int main() {
     Mozo listaMozos[100];
     int cantMozos = generarArchivoMozos(listaMozos, 100);
-    if (cantMozos > 0){
+    if (cantMozos > 0) {
         mostrarMozos();
         actualizarStock();
-    }  
+        generarPlanillasDiarias(listaMozos, cantMozos);
+    }   
     return 0;
 }
