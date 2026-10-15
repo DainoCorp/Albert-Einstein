@@ -1,4 +1,4 @@
-#include "buffet.h"
+#include "buffet.h"//agregado y probado el cierre.cpp
 #include <iostream>
 #include <cstdio> 
 #include <cstring> // Para strcmp
