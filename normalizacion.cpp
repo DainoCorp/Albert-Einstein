@@ -55,7 +55,6 @@ void actualizarStock() {
             if (prod.codigo == comanda.codigoProducto) {
                 prod.stockActual -= comanda.cantidad;
 
-                // Retrocedemos el puntero del archivo para pisar el registro actualizado
                 fseek(fInventario, -sizeof(Producto), SEEK_CUR);
                 fwrite(&prod, sizeof(Producto), 1, fInventario);
                 break;
@@ -107,7 +106,6 @@ int generarArchivoMozos(Mozo mozos[], int maxMozos) {
                 strcpy(mozos[cantMozos].nombre, reg.nombreMozo);
                 mozos[cantMozos].totalComision = reg.comision;
 
-                // Clave inicial: su idMozo como texto, luego encriptado
                 char clavePlana[20];
                 sprintf(clavePlana, "%d", mozos[cantMozos].idMozo);
                 encriptarPassword(clavePlana, mozos[cantMozos].password, K_ENCRIPTACION);
